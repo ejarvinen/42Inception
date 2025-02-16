@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+# configure server to be reachable by other containers on the first run
+if [ ! -e /etc/.firstrun ]; then
+	cat << EOF >> /etc/my.cnf.d/mariadb-server.cnf
+[mysgld]
+bind-address=0.0.0.0
+skip-networking=0
+EOF
+	touch /etc/.firstrun
+fi
+
+# when the first volume is mounted, we wanna create a database in it
+if [ ! -e /var/lib/mysql/.firstmount ]; then
+	# init a database on the volume and start MariaDB in the background
+	mysql_install_db --datadir=/var/lib/mysql --skip-test-db --user=mysql --group=mysql \
+		--auth-root-authentication-method=socket >/dev/null 2>/dev/null
+	mysqld_safe &
+	mysqld_pid=$!
+
+	# wait for the server to start, then set up database and accounts
+	mysqladmin ping -u root --silent --wait >/dev/null 2>/dev/null
+	cat << EOF | mysql --protocol=socket -u root -p=
+CREATE DATABASE $MYSQL_DATABASE;
+CREATE USER '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+GRANT ALL PRIVILEDGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+GRANT ALL PRIVILEDGES on *.* to 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
+FLUSH PRIVILEDGES;
+EOF
+
+	# shut down temporary server and mark the volume initialized
+	mysqladmin shutdown
+	touch /var/lib/mysql/.firstmount
+fi
+
+exec mysqld_safe
