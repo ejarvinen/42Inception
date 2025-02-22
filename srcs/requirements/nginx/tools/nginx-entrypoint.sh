@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # check if DOMAIN_NAME is set
@@ -11,49 +11,73 @@ fi
 CERT_DIR="/etc/nginx/ssl"
 CERT_FILE="$CERT_DIR/emansoor.crt"
 KEY_FILE="$CERT_DIR/emansoor.key"
-NGINX_CONF="/etc/nginx/http.d/default.conf"
-
-# create SSL certificate
-openssl req -x509 -days 365 -newkey rsa:2048 -nodes \
-  -out "$CERT_FILE" \
-  -keyout "$KEY_FILE" \
-  -subj "/CN=$DOMAIN_NAME" \
-  >/dev/null 2>&1
+NGINX_CONF="/etc/nginx/nginx.conf"
 
 # nginx configuration
 NGINX_CONFIG="
-server {
-  listen 443 ssl;
-  http2 on;
-  listen [::]:443 ssl;
-  server_name $DOMAIN_NAME;
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
 
-  ssl_certificate $CERT_FILE;
-  ssl_certificate_key $KEY_FILE;
+events {
+   worker_connections 1024;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log warn;
+
   ssl_protocols TLSv1.2 TLSv1.3;
-  ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+  ssl_prefer_server_ciphers on;
 
-  root /var/www/html;
-  index index.php index.html index.htm;
+  gzip on;
+  gzip_comp_level 6;
+  gzip_min_length 256;
+  gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
-  location / {
-    try_files \$uri \$uri/ /index.php?\$args;
-  }
+  server {
+    listen 443 ssl;
+    http2 on;
+    listen [::]:443 ssl;
+    server_name $DOMAIN_NAME;
 
-  location ~ [^/]\.php(/|\$) {
-    try_files \$fastcgi_script_name =404;
-    fastcgi_pass wordpress:9000;
-    fastcgi_index index.php;
-    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
-    fastcgi_param PATH_INFO \$fastcgi_path_info;
-    fastcgi_split_path_info ^(.+\.php)(/.*)\$;
-    include fastcgi_params;
+    ssl_certificate $CERT_FILE;
+    ssl_certificate_key $KEY_FILE;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+
+    root /var/www/html;
+    index index.php index.html index.htm;
+
+    location / {
+      try_files \$uri \$uri/ /index.php?\$args;
+    }
+
+    location ~ [^/]\.php(/|\$) {
+      try_files \$fastcgi_script_name =404;
+      fastcgi_pass wordpress:9000;
+      fastcgi_index index.php;
+      fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+      fastcgi_param PATH_INFO \$fastcgi_path_info;
+      fastcgi_split_path_info ^(.+\.php)(/.*)\$;
+      include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+          deny all;
+    }
   }
 }
 "
 
-# append or replace Nginx config
+# replace Nginx config
 echo "$NGINX_CONFIG" > "$NGINX_CONF"
+
+echo "127.0.0.1 "$DOMAIN_NAME"" >> /etc/hosts
 
 # start Nginx in the foreground
 exec nginx -g 'daemon off;'

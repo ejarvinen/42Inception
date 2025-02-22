@@ -1,14 +1,21 @@
 #!/bin/bash
 set -e
 
+# increase php memory limit
+echo "memory_limit = 512M" > /etc/php83/conf.d/99-custom.ini
+
 # wait for database
-until mysql -h $MYSQL_DATABASE -u $MYSQL_USER -p $MYSQL_PASSWORD -e "SELECT 1"; do
+until mysqladmin ping -h mariadb --silent; do
 	echo "Waiting for MariaDB..."
 	sleep 3
 done
 
+echo "Connection to mariadb established..."
+
 # wordpress installation
 if [ ! -f wp-config.php ]; then
+
+	echo "Installing wordpress..."
 	wp core download --allow-root
 
 	wp config create \
@@ -27,4 +34,5 @@ if [ ! -f wp-config.php ]; then
 		--allow-root
 fi
 
+echo "Finished configuration"
 exec "$@"
