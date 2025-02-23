@@ -13,7 +13,8 @@ RUN apk update && apk add --no-cache \
 	php83-session \
 	mariadb-client \
 	wget \
-	bash
+	bash \
+	ca-certificates
 RUN mkdir -p /var/www/html && \
 	wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
 	chmod +x wp-cli.phar && \
@@ -22,6 +23,7 @@ COPY conf/www.conf /etc/php83/php-fpm.d/www.conf
 COPY tools/wordpress-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh
 WORKDIR /var/www/html
+RUN chown -R nobody:nobody /var/www/html
 EXPOSE 9000
 ENTRYPOINT [ "/usr/local/bin/wordpress-entrypoint.sh" ]
 CMD ["/usr/sbin/php-fpm83", "-F"]
