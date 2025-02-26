@@ -11,6 +11,7 @@ RUN apk update && apk add --no-cache \
 	php83-xml \
 	php83-phar \
 	php83-session \
+	php83-gd \
 	mariadb-client \
 	wget \
 	bash \
@@ -23,7 +24,6 @@ COPY conf/www.conf /etc/php83/php-fpm.d/www.conf
 COPY tools/wordpress-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh
 WORKDIR /var/www/html
-RUN chown -R nobody:nobody /var/www/html
 EXPOSE 9000
 ENTRYPOINT [ "/usr/local/bin/wordpress-entrypoint.sh" ]
 CMD ["/usr/sbin/php-fpm83", "-F"]

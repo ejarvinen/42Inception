@@ -15,7 +15,7 @@ NGINX_CONF="/etc/nginx/nginx.conf"
 
 # nginx configuration
 NGINX_CONFIG="
-user nginx;
+user nobody;
 worker_processes auto;
 error_log /var/log/nginx/error.log warn;
 pid /var/run/nginx.pid;
@@ -69,6 +69,13 @@ http {
 
     location ~ /\.ht {
           deny all;
+    }
+
+    location /wp-content/ {
+      alias /var/www/html/wp-content/;
+      access_log off;
+      log_not_found off;
+      expires max;
     }
   }
 }

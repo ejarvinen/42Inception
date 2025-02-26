@@ -22,10 +22,13 @@ fclean: clean
 	@$(DOCKER_COMPOSE) down --rmi all --volumes --remove-orphans
 	@if [ -n "$$(docker ps -aq)" ]; then docker rm -f $$(docker ps -aq); fi
 	@if [ -n "$$(docker images -q)" ]; then docker rmi -f $$(docker images -aq); fi
-	@rm -rf $(WP_DATA_DIR)
-	@rm -rf $(DB_DATA_DIR)
+	@sudo rm -rf $(WP_DATA_DIR)
+	@sudo rm -rf $(DB_DATA_DIR)
 
 create_dirs:
+	@if [ ! -d "$(DATA_DIR)" ]; then \
+		mkdir -p $(DATA_DIR); \
+	fi
 	@mkdir -p $(WP_DATA_DIR)
 	@mkdir -p $(DB_DATA_DIR)
 
