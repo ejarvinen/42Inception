@@ -16,6 +16,11 @@ services:
     networks:
       - docker-network
     image: mariadb
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
   nginx:
     container_name: nginx
     init: true
@@ -34,6 +39,7 @@ services:
     depends_on:
       - wordpress
     image: nginx
+
   wordpress:
     container_name: wordpress
     init: true
@@ -56,8 +62,14 @@ services:
     networks:
       - docker-network
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     image: wordpress
+    healthcheck:
+      test: ["CMD", "test", "-f", "/var/www/html/wp-login.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mariadb:

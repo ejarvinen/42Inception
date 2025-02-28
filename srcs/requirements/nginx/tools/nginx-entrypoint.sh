@@ -7,6 +7,24 @@ if [ -z "$DOMAIN_NAME" ]; then
 	exit 1
 fi
 
+MAX_RETRIES=30
+RETRY_INTERVAL=2
+
+echo "Checking if WordPress volume is available..."
+for i in $(seq 1 $MAX_RETRIES); do
+	if [ -f "/var/www/html/index.php" ]; then
+		echo "WordPress volume is ready!"
+		break
+	fi
+	echo "Waiting for WordPress volume to be available... Attempt $i/$MAX_RETRIES"
+	sleep $RETRY_INTERVAL
+done
+
+if [ ! -f "/var/www/html/index.php" ]; then
+	echo "ERROR: WordPress volume not available after $MAX_RETRIES attempts."
+	exit 1
+fi
+
 # define paths
 CERT_DIR="/etc/nginx/ssl"
 CERT_FILE="$CERT_DIR/emansoor.crt"
@@ -38,6 +56,8 @@ http {
   gzip_comp_level 6;
   gzip_min_length 256;
   gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+  client_max_body_size 512M;
 
   server {
     listen 443 ssl;

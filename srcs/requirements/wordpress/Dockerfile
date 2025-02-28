@@ -24,6 +24,11 @@ COPY conf/www.conf /etc/php83/php-fpm.d/www.conf
 COPY tools/wordpress-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/wordpress-entrypoint.sh
 WORKDIR /var/www/html
+RUN echo "memory_limit = 512M" > /etc/php83/conf.d/99-custom.ini
+RUN echo "upload_max_filesize = 512M" >> /etc/php83/conf.d/99-custom.ini
+RUN echo "post_max_size = 512M" >> /etc/php83/conf.d/99-custom.ini
+RUN echo "max_execution_time = 300" >> /etc/php83/conf.d/99-custom.ini
+RUN echo "max_input_time = 300" >> /etc/php83/conf.d/99-custom.ini
 EXPOSE 9000
 ENTRYPOINT [ "/usr/local/bin/wordpress-entrypoint.sh" ]
 CMD ["/usr/sbin/php-fpm83", "-F"]

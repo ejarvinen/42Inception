@@ -1,21 +1,24 @@
 #!/bin/bash
 set -e
 
-# increase php memory limit
-echo "memory_limit = 512M" > /etc/php83/conf.d/99-custom.ini
-echo "upload_max_filesize = 512M" > /etc/php83/conf.d/99-custom.ini
-echo "post_max_size = 512M" > /etc/php83/conf.d/99-custom.ini
+MAX_TRIES=30
+TRIES=0
 
-# wait for database
-until mysqladmin ping -h mariadb --silent; do
-	echo "Waiting for MariaDB..."
+while ! mysqladmin ping -h mariadb --silent; do
+	TRIES=$((TRIES + 1))
+	echo "Waiting for MariaDB ($TRIES/$MAX_TRIES)..."
+
+	if [ "$TRIES" -ge "$MAX_TRIES" ]; then
+		echo "MariaDB is not responding. Exiting."
+		exit 1
+	fi
+
 	sleep 3
 done
-
-echo "Connection to mariadb established..."
+echo "MariaDB is ready!" 
 
 # wordpress installation
-if [ ! -f wp-config.php ]; then
+if [ ! -f wp-config.php ] || [ ! -d wp-admin ]; then
 
 	echo "Installing wordpress..."
 	wp core download --allow-root
@@ -24,7 +27,7 @@ if [ ! -f wp-config.php ]; then
 		--dbname=$MYSQL_DATABASE \
 		--dbuser=$MYSQL_USER \
 		--dbpass=$MYSQL_PASSWORD \
-		--dbhost=$MYSQL_DATABASE \
+		--dbhost=mariadb \
 		--allow-root
 
 	wp core install \
@@ -33,9 +36,24 @@ if [ ! -f wp-config.php ]; then
 		--admin_user=$WORDPRESS_ADMIN_USER \
 		--admin_password=$WORDPRESS_ADMIN_PASSWORD \
 		--admin_email=$WORDPRESS_ADMIN_EMAIL \
-		--allow-root
+		--allow-root \
+		--skip-email
 
     echo "WordPress setup complete!"
+fi
+
+#configure and optimize MySQL handling
+
+echo "Updadting wp-config.php..."
+
+if ! grep -q "WP_MEMORY_LIMIT" wp-config.php; then
+	cat <<EOF >> wp-config.php
+define('FS_METHOD', 'direct');
+define('WP_ALLOW_REPAIR', true);
+define('WP_MEMORY_LIMIT', '512M');
+define('WP_MAX_MEMORY_LIMIT', '512M');
+define('DB_HOST', 'mariadb:3306');
+EOF
 fi
 
 chown -R nobody:nobody /var/www/html
