@@ -42,6 +42,18 @@ if [ ! -f wp-config.php ] || [ ! -d wp-admin ]; then
     echo "WordPress setup complete!"
 fi
 
+if ! wp user get "$WORDPRESS_USER" --allow-root > /dev/null 2>&1; then
+	echo "Creating regular WordPress user..."
+	wp user create "$WORDPRESS_USER" "$WORDPRESS_USER_EMAIL" \
+		--user_pass="$WORDPRESS_PASSWORD" \
+		--role=subscriber \
+		--allow-root \
+		--skip-email
+	echo "WordPress user '$WORDPRESS_USER' created."
+else
+	echo "WordPress user '$WORDPRESS_USER' already exists."
+fi
+
 #configure and optimize MySQL handling
 
 echo "Updadting wp-config.php..."
