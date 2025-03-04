@@ -1,0 +1,115 @@
+********************GENERAL********************
+
+* Transfer files from local to remote host:
+
+scp -P 4241 -r /path/to/local/folder user@localhost:/path/to/remote/dir
+
+* View the whole Inception installation and configuration process with messages:
+
+cd srcs
+docker-compose up --build
+
+* See running containers:
+
+docker ps
+
+* See logs for a specific container:
+
+docker logs <container-name>
+
+OR
+
+cd ./srcs | docker-compose logs <container-name>
+
+* To run a single container without the rest:
+
+cd srcs/
+docker run --rm -it --env-file .env --entrypoint sh <wordpress-image>
+
+-----> (DEBUGGING) try running commands in script one by one to see which one's failing / check for installed packages from Dockerfile
+
+* To inspect the network:
+
+docker network inspect docker-network
+
+* To check if container restarts:
+
+docker exec -it container-name sh
+kill 1 # kills the main process
+
+docker inspect -f '{{ .RestartCount }}' container-name #prints out how many times container has restarted
+OR
+docker inspect --format 'Container: {{.Name}} - Restart Count: {{.RestartCount}}' $(docker ps -q) #prints out restart count for all containers
+
+* Verify correct usage of Docker daemon:
+
+docker exec -it container-name ps aux #PID 1 cannot be any of these: bash, sh, sleep 
+
+* Check Docker volume info:
+
+docker volume ls 
+docker volume inspect volume-name
+
+********************TEST MARIADB CONTENTS********************
+
+* Access MariaDB container's shell:
+
+docker exec -it container_id_or_name sh
+
+* Enter mariaDB client inside the container:
+
+mysql -u root -p
+
+* Check what databases exist:
+
+SHOW DATABASES;
+
+* Check if mysql user exists (.env) and the priviledges granted to it:
+
+SELECT User, Host FROM mysql.user;
+SHOW GRANTS FOR emansoor;
+
+* Check that WordPress tables are set up:
+
+USE mariadb;
+SHOW TABLES;
+
+* Verify WordPress content (examples):
+
+SELECT * FROM <table-name>
+
+********************TEST WORDPRESS CONTAINER********************
+
+* check if php-fpm is running inside the container
+
+docker exec -it wordpress ps aux | grep php-fpm
+
+* check if you can connect to MariaDB from WordPress
+
+docker exec -it wordpress sh
+mysql -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"
+OR
+mysql -h mariadb -u emansoor -p
+
+********************TEST NGINX CONTAINER********************
+
+*check the validity of the SSL certificate:
+
+docker exec -it container_id_or_name sh
+openssl s_client -connect user.42.fr:443
+
+* check if Nginx is actually listening to port 443 inside the container:
+
+docker exec -it container-name netstat -tlnp
+
+* test the same thing on host:
+
+docker inspect container-name | grep "443" # if "HostPort": "443" is missing, game over
+
+* check the TLS and http/https access inside the container:
+
+docker exec -it container-name-or-id 
+curl -k http://user.42.fr # should fail 
+curl -k https://user.42.fr # should display a html document
+curl -v https://user.42.fr # display TLS info
+

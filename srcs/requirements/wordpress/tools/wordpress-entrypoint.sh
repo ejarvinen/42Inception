@@ -44,11 +44,10 @@ fi
 
 if ! wp user get "$WORDPRESS_USER" --allow-root > /dev/null 2>&1; then
 	echo "Creating regular WordPress user..."
-	wp user create "$WORDPRESS_USER" "$WORDPRESS_USER_EMAIL" \
+	wp user create "$WORDPRESS_USER" "$WORDPRESS_EMAIL" \
 		--user_pass="$WORDPRESS_PASSWORD" \
 		--role=subscriber \
-		--allow-root \
-		--skip-email
+		--allow-root
 	echo "WordPress user '$WORDPRESS_USER' created."
 else
 	echo "WordPress user '$WORDPRESS_USER' already exists."
@@ -56,7 +55,7 @@ fi
 
 #configure and optimize MySQL handling
 
-echo "Updadting wp-config.php..."
+echo "Updating wp-config.php..."
 
 if ! grep -q "WP_MEMORY_LIMIT" wp-config.php; then
 	cat <<EOF >> wp-config.php

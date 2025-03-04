@@ -1,0 +1,59 @@
+1. Environment Setup & Initial Checks
+
+    - Ensure the project is running inside a Virtual Machine.
+    - Check the directory structure to confirm it matches the expected format.
+    - Verify that a Makefile is present at the root and contains instructions for building the Docker images using docker-compose.yml.
+
+2. Docker and Network Configuration
+
+    - Run docker-compose up and check for errors during build and deployment.
+    - Verify that each service is running in its own dedicated container.
+    - Ensure that no pre-built images (except Alpine/Debian) were pulled.
+    - Check that the containers restart automatically in case of a crash.
+    - Inspect the docker network to confirm that containers are correctly connected.
+
+3. Service-Specific Testing
+
+NGINX
+
+    - Verify that the NGINX container runs with TLSv1.2 or TLSv1.3 only.
+    - Confirm that NGINX is the only entry point via port 443.
+    - Ensure that network: host, --link, or links: are not used in docker-compose.yml.
+    - Test SSL certificate installation and HTTPS accessibility.
+
+WordPress + PHP-FPM
+
+    - Ensure WordPress is installed and configured correctly inside its container.
+    - Check that it does not include NGINX (it should rely on the NGINX container).
+    - Verify that PHP-FPM is running properly.
+
+MariaDB
+
+    - Confirm MariaDB is running inside its own container without NGINX.
+    - Check that two users exist in the database, one being an administrator with a username that does not contain "admin" or variations of it.
+    - Ensure passwords are not hardcoded in Dockerfiles and are passed through environment variables.
+
+4. Volume and Persistence
+
+    - Confirm that the WordPress database is stored in a volume.
+    - Ensure that WordPress website files are stored in a separate volume.
+    - Check that the volumes are mounted in /home/login/data in the host machine.
+
+5. Domain Configuration
+
+    - Verify that the domain name login.42.fr correctly points to the local IP.
+    - Check that the .env file contains the necessary domain and environment variables.
+    - Confirm that credentials are stored securely in .env and not exposed in git.
+
+6. Security and Best Practices
+
+    - Ensure no infinite loops (tail -f, while true, etc.) are used in entrypoints.
+    - Confirm proper daemon handling in Dockerfiles.
+    - Check that the latest tag is not used in images.
+
+7. Functional Testing
+
+    - Access the website via https://login.42.fr and check if it loads correctly.
+    - Test login functionality for WordPress.
+    - Verify database connectivity.
+    - Restart the VM and ensure everything starts correctly.
