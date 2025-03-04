@@ -1,6 +1,4 @@
 # 42Inception
-*this project is still under construction, stay tuned* :wink:
-
 ## Description
 `Inception` is a system administration project aimed at setting up a small-scale infrastructure using Docker and Docker Compose. The goal is to create and manage multiple services in isolated containers, following best practices in containerization and security.
 
