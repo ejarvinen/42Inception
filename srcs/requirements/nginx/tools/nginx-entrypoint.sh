@@ -25,10 +25,15 @@ if [ ! -f "/var/www/html/index.php" ]; then
 	exit 1
 fi
 
-# define paths
-CERT_DIR="/etc/nginx/ssl"
-CERT_FILE="$CERT_DIR/emansoor.crt"
-KEY_FILE="$CERT_DIR/emansoor.key"
+if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
+	echo "Generating self-signed SSL certificate..."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout "$SSL_KEY" \
+		-out "$SSL_CERT" \
+		-subj "/CN=${DOMAIN_NAME:-localhost}"
+fi
+
+# define configuration file path
 NGINX_CONF="/etc/nginx/nginx.conf"
 
 # nginx configuration
@@ -65,8 +70,8 @@ http {
     listen [::]:443 ssl;
     server_name $DOMAIN_NAME;
 
-    ssl_certificate $CERT_FILE;
-    ssl_certificate_key $KEY_FILE;
+    ssl_certificate $SSL_CERT;
+    ssl_certificate_key $SSL_KEY;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
 
