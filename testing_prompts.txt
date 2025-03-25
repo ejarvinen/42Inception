@@ -95,7 +95,7 @@ mysql -h mariadb -u emansoor -p
 
 *check the validity of the SSL certificate:
 
-docker exec -it container_id_or_name sh
+docker exec -it nginx sh
 openssl s_client -connect user.42.fr:443
 
 * check if Nginx is actually listening to port 443 inside the container:
@@ -104,11 +104,11 @@ docker exec -it container-name netstat -tlnp
 
 * test the same thing on host:
 
-docker inspect container-name | grep "443" # if "HostPort": "443" is missing, game over
+docker inspect nginx | grep "443" # if "HostPort": "443" is missing, game over
 
 * check the TLS and http/https access inside the container:
 
-docker exec -it container-name-or-id 
+docker exec -it nginx sh
 curl -k http://user.42.fr # should fail 
 curl -k https://user.42.fr # should display a html document
 curl -v https://user.42.fr # display TLS info
