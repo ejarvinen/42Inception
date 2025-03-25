@@ -31,6 +31,7 @@ if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
 		-keyout "$SSL_KEY" \
 		-out "$SSL_CERT" \
 		-subj "/CN=${DOMAIN_NAME:-localhost}"
+	chmod 600 $SSL_KEY
 fi
 
 # define configuration file path
