@@ -109,7 +109,7 @@ docker inspect nginx | grep "443" # if "HostPort": "443" is missing, game over
 * check the TLS and http/https access inside the container:
 
 docker exec -it nginx sh
-curl -k http://user.42.fr # should fail 
-curl -k https://user.42.fr # should display a html document
+curl -k (--verbose) http://user.42.fr # should fail 
+curl -k (--verbose) https://user.42.fr # should display a html document
 curl -v https://user.42.fr # display TLS info
 
